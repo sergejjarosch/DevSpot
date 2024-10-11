@@ -1,3 +1,4 @@
+using DevSpot.Constants;
 using DevSpot.Data;
 using Microsoft.AspNetCore.Identity;
 using Microsoft.EntityFrameworkCore;
@@ -20,7 +21,9 @@ namespace DevSpot
             builder.Services.AddDefaultIdentity<IdentityUser>(options =>
             {
                 options.SignIn.RequireConfirmedAccount = false; // wichtig fuer entwicklung, damit es nicht bestetigt werden muss.
-            });
+            })
+                .AddRoles<IdentityRole>()
+                .AddEntityFrameworkStores<ApplicationDbContext>();
 
             // Add services to the container.
             builder.Services.AddControllersWithViews();
@@ -34,11 +37,19 @@ namespace DevSpot
                 // The default HSTS value is 30 days. You may want to change this for production scenarios, see https://aka.ms/aspnetcore-hsts.
                 app.UseHsts();
             }
+            // Seeding the Roles
+            using (var scope = app.Services.CreateScope())
+            {
+                var services = scope.ServiceProvider;
+                RoleSeeder.SeedRolsesAsync(services).Wait();
+            }
 
             app.UseHttpsRedirection();
             app.UseRouting();
 
             app.UseAuthorization();
+
+            app.MapRazorPages();
 
             app.MapStaticAssets();
             app.MapControllerRoute(
